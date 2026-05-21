@@ -1,32 +1,12 @@
-name = "my-database-app"
+name = "cloudflaredb-pages"
 main = "worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-05-20"
 
-# D1 Database configuration
-[[d1_databases]]
-binding = "DB"
-database_name = "my-database"
-database_id = "YOUR_DATABASE_ID"  # Will be filled after creating the DB
+[durable_objects]
+bindings = [
+  { name = "MyDatabase", class_name = "MyDatabase" }
+]
 
-# Environment variables (optional)
-[vars]
-ENVIRONMENT = "production"
-
-# For local development
-[dev]
-port = 8787
-local_protocol = "http"
-
-# Uncomment for production domain
-# [env.production]
-# routes = [{ pattern = "your-domain.com", custom_domain = true }]
-
-# For better performance
-[limits]
-cpu_ms = 50
-subrequests = 50
-
-# Observability
-[observability]
-enabled = true
-head_sampling_rate = 1
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MyDatabase"]
