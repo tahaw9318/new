@@ -2,11 +2,27 @@ name = "cloudflaredb-pages"
 main = "worker.js"
 compatibility_date = "2026-05-20"
 
-[durable_objects]
-bindings = [
-  { name = "MyDatabase", class_name = "MyDatabase" }
-]
+# Durable Objects binding
+[[durable_objects.bindings]]
+name = "MyDatabase"
+class_name = "MyDatabase"
 
+# Migrations
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["MyDatabase"]
+new_classes = ["MyDatabase"]
+
+# Optional: Add D1 database if you want to use D1 instead
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = "your-database-id"
+
+# Optional: Add routes
+# routes = [
+#   { pattern = "your-domain.com", custom_domain = true }
+# ]
+
+# Environment variables (optional)
+# [vars]
+# ENVIRONMENT = "production"
