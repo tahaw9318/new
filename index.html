@@ -1,247 +1,503 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cloudflare Database Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      max-width: 800px;
-      margin: 40px auto;
-      background-color: #f9f9f9;
-    }
-    h1 {
-      color: #222;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    input {
-      padding: 10px;
-      margin-right: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 200px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #0078d4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #005fa3;
-    }
-    .delete-btn {
-      background-color: #dc3545;
-      margin-left: 10px;
-      padding: 5px 10px;
-    }
-    .delete-btn:hover {
-      background-color: #c82333;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background: #fff;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .record-info {
-      flex: 1;
-    }
-    .record-name {
-      font-weight: bold;
-      color: #0078d4;
-    }
-    .record-email {
-      color: #666;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-    .loading {
-      text-align: center;
-      color: #666;
-      padding: 20px;
-    }
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 10px;
-      border-radius: 4px;
-      margin: 10px 0;
-    }
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-      padding: 10px;
-      border-radius: 4px;
-      margin: 10px 0;
-    }
-    .refresh-btn {
-      background-color: #28a745;
-      margin-left: 10px;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Sort Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section {
+            background: #f7f9fc;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 2;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: #ff4757;
+        }
+
+        .random-btn {
+            background: #4CAF50;
+        }
+
+        .visualization-section {
+            background: #f7f9fc;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .array-visual {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            min-height: 300px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 10px 5px;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .bar.comparing {
+            background: #ff9800;
+            transform: scale(1.05);
+        }
+
+        .bar.swapping {
+            background: #ff4757;
+            transform: scale(1.1);
+        }
+
+        .bar.sorted {
+            background: #4CAF50;
+        }
+
+        .stats-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .steps-section {
+            background: #f7f9fc;
+            padding: 30px;
+            border-radius: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .step-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-family: monospace;
+        }
+
+        .step-number {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .speed-control {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            .bar {
+                min-width: 35px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h1>📊 Cloudflare Database Demo</h1>
-    <button onclick="loadRecords()" class="refresh-btn">🔄 Refresh</button>
-  </div>
-  
-  <div class="form-group">
-    <h2>Add Record</h2>
-    <input id="name" placeholder="Name" />
-    <input id="email" placeholder="Email" />
-    <button onclick="addRecord()">Add Record</button>
-  </div>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Bubble Sort Visualizer</h1>
+            <p>Watch how bubble sort works step by step</p>
+        </div>
 
-  <h2>Stored Records:</h2>
-  <div id="message"></div>
-  <ul id="records">
-    <li class="loading">Loading records...</li>
-  </ul>
+        <div class="content">
+            <div class="input-section">
+                <h2>📝 Enter Numbers</h2>
+                <div class="input-group">
+                    <input type="text" id="arrayInput" placeholder="Enter numbers separated by commas (e.g., 64,34,25,12,22,11,90)" value="64,34,25,12,22,11,90">
+                    <button onclick="startSorting()">▶ Start Sorting</button>
+                    <button class="random-btn" onclick="generateRandomArray()">🎲 Random</button>
+                    <button class="reset-btn" onclick="resetArray()">🔄 Reset</button>
+                </div>
+                <div class="speed-control">
+                    <span>⏩ Speed:</span>
+                    <input type="range" id="speedSlider" min="100" max="1000" value="300">
+                    <span id="speedValue">300ms</span>
+                </div>
+            </div>
 
-  <script>
-    // Use relative URL - works on same domain
-    const WORKER_URL = ""; // Empty means use current domain
-    // Or use your Worker URL: "https://cloudflaredb-pages.yasir-ali.workers.dev"
+            <div class="visualization-section">
+                <h2>📊 Visualization</h2>
+                <div class="array-visual" id="arrayVisual"></div>
+            </div>
 
-    // Show message helper
-    function showMessage(msg, type) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.innerHTML = `<div class="${type}">${msg}</div>`;
-      setTimeout(() => {
-        messageDiv.innerHTML = '';
-      }, 3000);
-    }
+            <div class="stats-section">
+                <h2>📈 Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="comparisons">0</div>
+                        <div class="stat-label">Comparisons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="swaps">0</div>
+                        <div class="stat-label">Swaps</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="passes">0</div>
+                        <div class="stat-label">Passes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="arraySize">0</div>
+                        <div class="stat-label">Array Size</div>
+                    </div>
+                </div>
+            </div>
 
-    // Add record
-    async function addRecord() {
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      
-      if (!name || !email) {
-        showMessage("Please enter both name and email.", "error");
-        return;
-      }
+            <div class="steps-section">
+                <h2>📖 Step by Step</h2>
+                <div id="stepsList">
+                    <p style="color: #999;">Click "Start Sorting" to see steps...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      try {
-        const response = await fetch(`${WORKER_URL}/add`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email })
+    <script>
+        let currentArray = [];
+        let isSorting = false;
+
+        // DOM elements
+        const arrayInput = document.getElementById('arrayInput');
+        const arrayVisual = document.getElementById('arrayVisual');
+        const comparisonsEl = document.getElementById('comparisons');
+        const swapsEl = document.getElementById('swaps');
+        const passesEl = document.getElementById('passes');
+        const arraySizeEl = document.getElementById('arraySize');
+        const stepsList = document.getElementById('stepsList');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+
+        // Update speed display
+        speedSlider.addEventListener('input', (e) => {
+            speedValue.textContent = e.target.value + 'ms';
         });
 
-        if (response.ok) {
-          showMessage("✅ Record added successfully!", "success");
-          document.getElementById("name").value = "";
-          document.getElementById("email").value = "";
-          loadRecords();
-        } else {
-          const error = await response.json();
-          showMessage("❌ Error: " + (error.error || "Failed to add record"), "error");
+        // Initialize
+        function init() {
+            const defaultArray = [64, 34, 25, 12, 22, 11, 90];
+            currentArray = [...defaultArray];
+            arrayInput.value = defaultArray.join(',');
+            displayArray(currentArray);
+            updateStats(currentArray);
         }
-      } catch (error) {
-        showMessage("❌ Network error: " + error.message, "error");
-      }
-    }
 
-    // Load all records
-    async function loadRecords() {
-      const container = document.getElementById("records");
-      container.innerHTML = '<li class="loading">Loading records...</li>';
-      
-      try {
-        const response = await fetch(`${WORKER_URL}/list`);
-        
-        if (!response.ok) {
-          throw new Error("Failed to load records");
+        // Display array as bars
+        function displayArray(arr, comparing = [], swapping = [], sorted = []) {
+            const maxVal = Math.max(...arr, 1);
+            arrayVisual.innerHTML = '';
+            
+            arr.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const height = (value / maxVal) * 200 + 40;
+                bar.style.height = height + 'px';
+                bar.style.lineHeight = height + 'px';
+                bar.textContent = value;
+                
+                if (comparing.includes(index)) bar.classList.add('comparing');
+                if (swapping.includes(index)) bar.classList.add('swapping');
+                if (sorted.includes(index)) bar.classList.add('sorted');
+                
+                arrayVisual.appendChild(bar);
+            });
         }
-        
-        const data = await response.json();
-        
-        if (!data || data.length === 0) {
-          container.innerHTML = '<li>📭 No records found. Add your first record above!</li>';
-          return;
+
+        // Update statistics
+        function updateStats(arr) {
+            arraySizeEl.textContent = arr.length;
         }
-        
-        // Display records with both name and email
-        container.innerHTML = data.map(record => {
-          // Handle both array and object formats
-          if (Array.isArray(record)) {
-            return `
-              <li>
-                <div class="record-info">
-                  <div class="record-name">👤 ${record[1]?.name || record[1]}</div>
-                  <div class="record-email">📧 ${record[1]?.email || record[1]}</div>
-                </div>
-              </li>
+
+        // Reset array
+        function resetArray() {
+            if (isSorting) return;
+            const numbers = arrayInput.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            if (numbers.length > 0) {
+                currentArray = [...numbers];
+                displayArray(currentArray);
+                updateStats(currentArray);
+                stepsList.innerHTML = '<p style="color: #999;">Click "Start Sorting" to see steps...</p>';
+                comparisonsEl.textContent = '0';
+                swapsEl.textContent = '0';
+                passesEl.textContent = '0';
+            }
+        }
+
+        // Generate random array
+        function generateRandomArray() {
+            if (isSorting) return;
+            const length = Math.floor(Math.random() * 10) + 5;
+            const randomArray = Array.from({ length }, () => Math.floor(Math.random() * 90) + 10);
+            currentArray = [...randomArray];
+            arrayInput.value = randomArray.join(',');
+            displayArray(currentArray);
+            updateStats(currentArray);
+            stepsList.innerHTML = '<p style="color: #999;">Click "Start Sorting" to see steps...</p>';
+            comparisonsEl.textContent = '0';
+            swapsEl.textContent = '0';
+            passesEl.textContent = '0';
+        }
+
+        // Sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Add step to list
+        function addStep(stepNum, description, array) {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'step-item';
+            stepDiv.innerHTML = `
+                <div class="step-number">Step ${stepNum}</div>
+                <div>${description}</div>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">[${array.join(', ')}]</div>
             `;
-          } else {
-            return `
-              <li>
-                <div class="record-info">
-                  <div class="record-name">👤 ${record.name || 'No name'}</div>
-                  <div class="record-email">📧 ${record.email || 'No email'}</div>
-                </div>
-                <button class="delete-btn" onclick="deleteRecord('${record.id || record.key}')">Delete</button>
-              </li>
-            `;
-          }
-        }).join("");
-        
-      } catch (error) {
-        console.error("Error loading records:", error);
-        container.innerHTML = '<li class="error">❌ Failed to load records. Please refresh the page.</li>';
-      }
-    }
-
-    // Delete record (if your backend supports it)
-    async function deleteRecord(id) {
-      if (!confirm("Are you sure you want to delete this record?")) return;
-      
-      try {
-        const response = await fetch(`${WORKER_URL}/delete/${id}`, {
-          method: "DELETE"
-        });
-        
-        if (response.ok) {
-          showMessage("✅ Record deleted successfully!", "success");
-          loadRecords();
-        } else {
-          showMessage("❌ Failed to delete record", "error");
+            stepsList.insertBefore(stepDiv, stepsList.firstChild);
+            
+            // Keep only last 20 steps
+            while (stepsList.children.length > 20) {
+                stepsList.removeChild(stepsList.lastChild);
+            }
         }
-      } catch (error) {
-        showMessage("❌ Network error: " + error.message, "error");
-      }
-    }
 
-    // Auto-refresh every 10 seconds
-    let autoRefresh = setInterval(() => {
-      loadRecords();
-    }, 10000);
+        // Clear steps
+        function clearSteps() {
+            stepsList.innerHTML = '';
+        }
 
-    // Load records on page load
-    loadRecords();
-  </script>
+        // Bubble sort algorithm with visualization
+        async function bubbleSort(arr) {
+            let array = [...arr];
+            let n = array.length;
+            let comparisons = 0;
+            let swaps = 0;
+            let passes = 0;
+            const speed = parseInt(speedSlider.value);
+            
+            clearSteps();
+            addStep(0, 'Starting array (unsorted)', array);
+            
+            for (let i = 0; i < n - 1; i++) {
+                let swapped = false;
+                passes++;
+                passesEl.textContent = passes;
+                
+                for (let j = 0; j < n - i - 1; j++) {
+                    comparisons++;
+                    comparisonsEl.textContent = comparisons;
+                    
+                    // Highlight comparing elements
+                    displayArray(array, [j, j + 1]);
+                    await sleep(speed);
+                    
+                    if (array[j] > array[j + 1]) {
+                        // Highlight swapping
+                        displayArray(array, [], [j, j + 1]);
+                        await sleep(speed);
+                        
+                        // Swap
+                        [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                        swaps++;
+                        swapsEl.textContent = swaps;
+                        swapped = true;
+                        
+                        // Display after swap
+                        displayArray(array);
+                        await sleep(speed);
+                    }
+                }
+                
+                // Mark last element as sorted
+                const sortedIndices = [];
+                for (let k = n - i - 1; k < n; k++) {
+                    sortedIndices.push(k);
+                }
+                displayArray(array, [], [], sortedIndices);
+                
+                addStep(passes, `Pass ${passes}: ${swapped ? `Made ${swaps} swaps so far` : 'No swaps needed - array is sorted!'}`, array);
+                
+                if (!swapped) {
+                    addStep(passes + 1, '✅ Sorting complete! Array is now sorted.', array);
+                    break;
+                }
+                
+                await sleep(speed);
+            }
+            
+            // Mark all as sorted
+            displayArray(array, [], [], array.map((_, idx) => idx));
+            
+            addStep('Final', '🎉 Bubble sort finished!', array);
+            
+            return { array, comparisons, swaps, passes };
+        }
+
+        // Start sorting
+        async function startSorting() {
+            if (isSorting) {
+                alert('Sorting already in progress!');
+                return;
+            }
+            
+            // Get array from input
+            const input = arrayInput.value.trim();
+            let numbers = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            
+            if (numbers.length === 0) {
+                alert('Please enter valid numbers!');
+                return;
+            }
+            
+            if (numbers.length > 15) {
+                alert('Please enter 15 numbers or less for better visualization!');
+                return;
+            }
+            
+            isSorting = true;
+            currentArray = [...numbers];
+            displayArray(currentArray);
+            
+            // Reset stats
+            comparisonsEl.textContent = '0';
+            swapsEl.textContent = '0';
+            passesEl.textContent = '0';
+            
+            // Run bubble sort
+            const result = await bubbleSort(currentArray);
+            currentArray = result.array;
+            
+            isSorting = false;
+        }
+
+        // Initialize on load
+        init();
+    </script>
 </body>
 </html>
