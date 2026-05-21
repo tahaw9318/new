@@ -1,476 +1,370 @@
-// worker.js - Complete working version
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
+// BUBBLE SORT - Complete working code
+
+// Get array from user
+function getArrayFromUser() {
+    let input = prompt("Enter numbers separated by commas (e.g., 5,3,8,1,9):", "64,34,25,12,22,11,90");
     
-    // Handle CORS
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
+    if (!input) {
+        return [64, 34, 25, 12, 22, 11, 90]; // Default array
     }
-
-    // Route API requests to Durable Object
-    if (url.pathname === "/add" || url.pathname === "/list" || url.pathname.startsWith("/delete/")) {
-      const id = env.MyDatabase.idFromName("main");
-      const obj = env.MyDatabase.get(id);
-      return obj.fetch(request);
-    }
-
-    // Serve HTML page
-    if (url.pathname === "/") {
-      const html = getHTML();
-      return new Response(html, {
-        headers: { "Content-Type": "text/html" }
-      });
-    }
-
-    return new Response("Not Found", { status: 404 });
-  }
-};
-
-// Durable Object Class
-export class MyDatabase {
-  constructor(state, env) {
-    this.storage = state.storage;
-  }
-
-  async fetch(request) {
-    const url = new URL(request.url);
-    const method = request.method;
     
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Content-Type": "application/json"
-    };
-
-    // GET /list - Get all records
-    if (url.pathname === "/list" && method === "GET") {
-      const entries = await this.storage.list();
-      const data = [];
-      for (const [key, value] of entries) {
-        data.push({ 
-          id: key, 
-          name: value.name, 
-          email: value.email,
-          timestamp: value.timestamp 
-        });
-      }
-      // Sort by timestamp (newest first)
-      data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      return new Response(JSON.stringify(data), { headers: corsHeaders });
+    let numbers = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+    
+    if (numbers.length === 0) {
+        alert("Please enter valid numbers!");
+        return getArrayFromUser();
     }
-
-    // POST /add - Add new record
-    if (url.pathname === "/add" && method === "POST") {
-      const { name, email } = await request.json();
-      
-      if (!name || !email) {
-        return new Response(JSON.stringify({ error: "Name and email required" }), {
-          status: 400,
-          headers: corsHeaders
-        });
-      }
-      
-      const id = Date.now().toString();
-      await this.storage.put(id, { 
-        name, 
-        email, 
-        timestamp: new Date().toISOString() 
-      });
-      
-      return new Response(JSON.stringify({ success: true, id }), {
-        status: 201,
-        headers: corsHeaders
-      });
-    }
-
-    // DELETE /delete/:id - Delete record
-    if (url.pathname.startsWith("/delete/") && method === "DELETE") {
-      const id = url.pathname.split("/").pop();
-      await this.storage.delete(id);
-      return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
-    }
-
-    return new Response(JSON.stringify({ error: "Not found" }), {
-      status: 404,
-      headers: corsHeaders
-    });
-  }
+    
+    return numbers;
 }
 
-function getHTML() {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloudflare Durable Objects Database</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+// Bubble Sort Algorithm
+function bubbleSort(arr) {
+    let array = [...arr];
+    let steps = [];
+    let comparisons = 0;
+    let swaps = 0;
+    let n = array.length;
     
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-    
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
-    
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
-    }
-    
-    .header h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
-    }
-    
-    .content {
-      padding: 40px;
-    }
-    
-    .form-section {
-      background: #f7f9fc;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: border-color 0.3s;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 12px 30px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-      width: 100%;
-    }
-    
-    button:hover {
-      transform: translateY(-2px);
-    }
-    
-    .data-section {
-      background: #f7f9fc;
-      padding: 30px;
-      border-radius: 15px;
-    }
-    
-    .data-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    
-    .refresh-btn {
-      background: #4CAF50;
-      width: auto;
-      padding: 8px 20px;
-    }
-    
-    .records-list {
-      display: grid;
-      gap: 15px;
-    }
-    
-    .record-card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: transform 0.2s;
-    }
-    
-    .record-card:hover {
-      transform: translateX(5px);
-    }
-    
-    .record-info {
-      flex: 1;
-    }
-    
-    .record-name {
-      font-size: 18px;
-      font-weight: 600;
-      color: #667eea;
-      margin-bottom: 5px;
-    }
-    
-    .record-email {
-      color: #666;
-      font-size: 14px;
-    }
-    
-    .record-meta {
-      font-size: 12px;
-      color: #999;
-      margin-top: 5px;
-    }
-    
-    .delete-btn {
-      background: #ff4757;
-      padding: 8px 20px;
-      font-size: 14px;
-      width: auto;
-      margin-left: 15px;
-    }
-    
-    .delete-btn:hover {
-      background: #ff3838;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #667eea;
-    }
-    
-    .error {
-      background: #ff4757;
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    
-    .success {
-      background: #4CAF50;
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
-    
-    @media (max-width: 768px) {
-      .content {
-        padding: 20px;
-      }
-      
-      .record-card {
-        flex-direction: column;
-        text-align: center;
-      }
-      
-      .delete-btn {
-        margin-left: 0;
-        margin-top: 10px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🗄️ Durable Objects Database</h1>
-      <p>Cloudflare Durable Objects Demo</p>
-    </div>
-    
-    <div class="content">
-      <div id="message"></div>
-      
-      <div class="form-section">
-        <h2>➕ Add New Record</h2>
-        <form id="recordForm">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" required placeholder="Enter full name">
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required placeholder="Enter email address">
-          </div>
-          <button type="submit">Add Record</button>
-        </form>
-      </div>
-      
-      <div class="data-section">
-        <div class="data-header">
-          <h2>📋 Stored Records</h2>
-          <button class="refresh-btn" onclick="loadRecords()">🔄 Refresh</button>
-        </div>
-        <div id="recordsList">
-          <div class="loading">Loading records...</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <script>
-    // Load records on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadRecords();
+    // Record initial state
+    steps.push({
+        step: 0,
+        array: [...array],
+        description: "Original array"
     });
     
-    // Handle form submission
-    document.getElementById('recordForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      
-      try {
-        const response = await fetch('/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name, email })
+    // Bubble sort logic
+    for (let i = 0; i < n - 1; i++) {
+        let swapped = false;
+        
+        for (let j = 0; j < n - i - 1; j++) {
+            comparisons++;
+            
+            if (array[j] > array[j + 1]) {
+                // Swap elements
+                [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                swaps++;
+                swapped = true;
+            }
+        }
+        
+        // Record this pass
+        steps.push({
+            step: i + 1,
+            array: [...array],
+            comparisons: comparisons,
+            swaps: swaps,
+            description: `Pass ${i + 1}: ${swapped ? 'Swapped elements' : 'No swaps needed - array sorted!'}`
         });
         
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          showMessage('Record added successfully!', 'success');
-          document.getElementById('recordForm').reset();
-          loadRecords();
-        } else {
-          showMessage(result.error || 'Failed to add record', 'error');
-        }
-      } catch (error) {
-        showMessage('Network error: ' + error.message, 'error');
-      }
-    });
-    
-    // Load all records
-    async function loadRecords() {
-      try {
-        const response = await fetch('/list');
-        
-        if (!response.ok) {
-          throw new Error('Failed to load records');
-        }
-        
-        const records = await response.json();
-        displayRecords(records);
-      } catch (error) {
-        showMessage('Error loading records: ' + error.message, 'error');
-        document.getElementById('recordsList').innerHTML = '<div class="error">Failed to load records. Please refresh the page.</div>';
-      }
+        // If no swaps, array is sorted
+        if (!swapped) break;
     }
     
-    // Display records
-    function displayRecords(records) {
-      const recordsList = document.getElementById('recordsList');
-      
-      if (!records || records.length === 0) {
-        recordsList.innerHTML = '<div class="empty-state">📭 No records found. Add your first record above!</div>';
-        return;
-      }
-      
-      recordsList.innerHTML = \`
-        <div class="records-list">
-          \${records.map(record => \`
-            <div class="record-card">
-              <div class="record-info">
-                <div class="record-name">👤 \${escapeHtml(record.name)}</div>
-                <div class="record-email">📧 \${escapeHtml(record.email)}</div>
-                <div class="record-meta">🆔 ID: \${record.id}</div>
-              </div>
-              <button class="delete-btn" onclick="deleteRecord('\${record.id}')">Delete</button>
+    return { sortedArray: array, steps, comparisons, swaps };
+}
+
+// Display results in console
+function displayResults(result, originalArray) {
+    console.log("=" .repeat(60));
+    console.log("BUBBLE SORT RESULTS");
+    console.log("=" .repeat(60));
+    console.log("Original Array:", originalArray);
+    console.log("Sorted Array:  ", result.sortedArray);
+    console.log("-" .repeat(60));
+    console.log("STATISTICS:");
+    console.log("  • Total Comparisons:", result.comparisons);
+    console.log("  • Total Swaps:", result.swaps);
+    console.log("  • Array Size:", originalArray.length);
+    console.log("=" .repeat(60));
+    
+    // Show steps
+    console.log("\nSTEP BY STEP PROCESS:");
+    console.log("-" .repeat(60));
+    result.steps.forEach(step => {
+        console.log(`Step ${step.step}: ${step.description}`);
+        console.log(`  Array: [${step.array.join(", ")}]`);
+    });
+}
+
+// Visual bubble sort with HTML
+function createVisualizer() {
+    // Create container if it doesn't exist
+    let container = document.getElementById('bubbleSortContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'bubbleSortContainer';
+        document.body.appendChild(container);
+    }
+    
+    container.innerHTML = `
+        <style>
+            .bubble-sort-viz {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 20px auto;
+                padding: 20px;
+                background: #f5f5f5;
+                border-radius: 10px;
+            }
+            .array-container {
+                display: flex;
+                justify-content: center;
+                align-items: flex-end;
+                gap: 5px;
+                margin: 20px 0;
+                min-height: 200px;
+            }
+            .bar {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                text-align: center;
+                padding: 10px 5px;
+                border-radius: 5px;
+                transition: all 0.3s ease;
+                min-width: 40px;
+            }
+            .comparing {
+                background: #ff9800;
+                transform: scale(1.05);
+            }
+            .swapping {
+                background: #ff4757;
+                transform: scale(1.1);
+            }
+            .sorted {
+                background: #4CAF50;
+            }
+            button {
+                background: #667eea;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:hover {
+                background: #764ba2;
+            }
+            input {
+                padding: 10px;
+                margin: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                width: 300px;
+            }
+            .stats {
+                background: white;
+                padding: 15px;
+                border-radius: 5px;
+                margin-top: 20px;
+            }
+            h3 {
+                margin: 10px 0;
+                color: #333;
+            }
+        </style>
+        
+        <div class="bubble-sort-viz">
+            <h2>🔄 Bubble Sort Visualizer</h2>
+            
+            <div>
+                <input type="text" id="arrayInput" placeholder="Enter numbers (e.g., 64,34,25,12)" value="64,34,25,12,22,11,90">
+                <button onclick="startBubbleSort()">Start Sorting</button>
+                <button onclick="generateRandom()">Random Array</button>
             </div>
-          \`).join('')}
+            
+            <div class="array-container" id="arrayContainer"></div>
+            
+            <div class="stats">
+                <h3>Statistics:</h3>
+                <p id="stats">Click "Start Sorting" to begin</p>
+            </div>
         </div>
-      \`;
-    }
+    `;
     
-    // Delete record
-    async function deleteRecord(id) {
-      if (!confirm('Are you sure you want to delete this record?')) return;
-      
-      try {
-        const response = await fetch(\`/delete/\${id}\`, {
-          method: 'DELETE'
-        });
+    // Add global functions
+    window.startBubbleSort = async function() {
+        const input = document.getElementById('arrayInput').value;
+        let numbers = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
         
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          showMessage('Record deleted successfully!', 'success');
-          loadRecords();
-        } else {
-          showMessage(result.error || 'Failed to delete record', 'error');
+        if (numbers.length === 0) {
+            alert('Please enter valid numbers!');
+            return;
         }
-      } catch (error) {
-        showMessage('Network error: ' + error.message, 'error');
-      }
+        
+        await animateBubbleSort(numbers);
+    };
+    
+    window.generateRandom = function() {
+        const length = Math.floor(Math.random() * 8) + 5;
+        const randomArray = Array.from({ length }, () => Math.floor(Math.random() * 90) + 10);
+        document.getElementById('arrayInput').value = randomArray.join(',');
+        displayArray(randomArray);
+    };
+    
+    function displayArray(arr, comparing = [], swapping = [], sorted = []) {
+        const container = document.getElementById('arrayContainer');
+        const maxVal = Math.max(...arr, 1);
+        
+        container.innerHTML = arr.map((val, idx) => {
+            let className = 'bar';
+            if (comparing.includes(idx)) className += ' comparing';
+            if (swapping.includes(idx)) className += ' swapping';
+            if (sorted.includes(idx)) className += ' sorted';
+            
+            const height = (val / maxVal) * 150 + 40;
+            
+            return `<div class="${className}" style="height: ${height}px; line-height: ${height}px;">
+                        ${val}
+                    </div>`;
+        }).join('');
     }
     
-    // Show message
-    function showMessage(msg, type) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.innerHTML = \`<div class="\${type}">\${msg}</div>\`;
-      setTimeout(() => {
-        messageDiv.innerHTML = '';
-      }, 3000);
+    async function animateBubbleSort(arr) {
+        let array = [...arr];
+        let n = array.length;
+        let comparisons = 0;
+        let swaps = 0;
+        let passes = 0;
+        
+        const statsDiv = document.getElementById('stats');
+        displayArray(array);
+        await sleep(1000);
+        
+        for (let i = 0; i < n - 1; i++) {
+            let swapped = false;
+            passes++;
+            
+            for (let j = 0; j < n - i - 1; j++) {
+                comparisons++;
+                
+                // Highlight comparing elements
+                displayArray(array, [j, j + 1]);
+                await sleep(300);
+                
+                if (array[j] > array[j + 1]) {
+                    // Highlight swapping
+                    displayArray(array, [], [j, j + 1]);
+                    await sleep(300);
+                    
+                    // Swap
+                    [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                    swaps++;
+                    swapped = true;
+                    
+                    // Display after swap
+                    displayArray(array);
+                    await sleep(300);
+                }
+            }
+            
+            // Mark last element as sorted
+            displayArray(array, [], [], [n - i - 1]);
+            
+            statsDiv.innerHTML = `
+                <strong>Pass ${passes}:</strong><br>
+                Comparisons: ${comparisons}<br>
+                Swaps: ${swaps}<br>
+                Current Array: [${array.join(", ")}]
+            `;
+            
+            await sleep(500);
+            
+            if (!swapped) {
+                statsDiv.innerHTML += `<br><strong>✅ Array is sorted! Stopping early.</strong>`;
+                break;
+            }
+        }
+        
+        // Mark all as sorted
+        displayArray(array, [], [], array.map((_, idx) => idx));
+        statsDiv.innerHTML += `<br><br><strong>✅ SORTING COMPLETE!</strong><br>
+                               Total Comparisons: ${comparisons}<br>
+                               Total Swaps: ${swaps}<br>
+                               Total Passes: ${passes}`;
     }
     
-    // Escape HTML
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
-  </script>
-</body>
-</html>`;
+    
+    // Display initial array
+    displayArray([64, 34, 25, 12, 22, 11, 90]);
+}
+
+// Simple bubble sort (returns sorted array)
+function bubbleSortSimple(arr) {
+    let array = [...arr];
+    let n = array.length;
+    
+    for (let i = 0; i < n - 1; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+            if (array[j] > array[j + 1]) {
+                [array[j], array[j + 1]] = [array[j + 1], array[j]];
+            }
+        }
+    }
+    
+    return array;
+}
+
+// Optimized bubble sort with early stop
+function bubbleSortOptimized(arr) {
+    let array = [...arr];
+    let n = array.length;
+    
+    for (let i = 0; i < n - 1; i++) {
+        let swapped = false;
+        
+        for (let j = 0; j < n - i - 1; j++) {
+            if (array[j] > array[j + 1]) {
+                [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                swapped = true;
+            }
+        }
+        
+        if (!swapped) break;
+    }
+    
+    return array;
+}
+
+// Main execution
+if (typeof window !== 'undefined') {
+    // Browser environment
+    window.addEventListener('DOMContentLoaded', () => {
+        createVisualizer();
+    });
+    
+    // Console version
+    console.log("Bubble Sort Loaded!");
+    console.log("Run: bubbleSortWithPrompt() to sort your own array");
+    
+    window.bubbleSortWithPrompt = function() {
+        const array = getArrayFromUser();
+        const result = bubbleSort(array);
+        displayResults(result, array);
+        return result;
+    };
+} else {
+    // Node.js environment
+    const readline = require('readline');
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    
+    rl.question("Enter numbers separated by commas: ", (answer) => {
+        const numbers = answer.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+        const result = bubbleSort(numbers);
+        displayResults(result, numbers);
+        rl.close();
+    });
+}
+
+// Export for Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { bubbleSort, bubbleSortSimple, bubbleSortOptimized };
 }
