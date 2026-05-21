@@ -1,4 +1,4 @@
-name = "cloudflaredb-pages"
+name = "new1"
 main = "worker.js"
 compatibility_date = "2026-05-20"
 
