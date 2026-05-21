@@ -8,19 +8,25 @@
     body {
       font-family: Arial, sans-serif;
       margin: 40px;
+      max-width: 800px;
+      margin: 40px auto;
       background-color: #f9f9f9;
     }
     h1 {
       color: #222;
     }
+    .form-group {
+      margin-bottom: 15px;
+    }
     input {
-      padding: 8px;
+      padding: 10px;
       margin-right: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      width: 200px;
     }
     button {
-      padding: 8px 12px;
+      padding: 10px 20px;
       background-color: #0078d4;
       color: white;
       border: none;
@@ -30,54 +36,211 @@
     button:hover {
       background-color: #005fa3;
     }
+    .delete-btn {
+      background-color: #dc3545;
+      margin-left: 10px;
+      padding: 5px 10px;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
     ul {
       list-style-type: none;
       padding: 0;
     }
     li {
       background: #fff;
-      margin: 6px 0;
-      padding: 10px;
+      margin: 10px 0;
+      padding: 15px;
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .record-info {
+      flex: 1;
+    }
+    .record-name {
+      font-weight: bold;
+      color: #0078d4;
+    }
+    .record-email {
+      color: #666;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .refresh-btn {
+      background-color: #28a745;
+      margin-left: 10px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Add Record</h1>
-  <input id="name" placeholder="Name" />
-  <input id="email" placeholder="Email" />
-  <button onclick="addRecord()">Add</button>
+  <div class="header">
+    <h1>📊 Cloudflare Database Demo</h1>
+    <button onclick="loadRecords()" class="refresh-btn">🔄 Refresh</button>
+  </div>
+  
+  <div class="form-group">
+    <h2>Add Record</h2>
+    <input id="name" placeholder="Name" />
+    <input id="email" placeholder="Email" />
+    <button onclick="addRecord()">Add Record</button>
+  </div>
 
   <h2>Stored Records:</h2>
-  <ul id="records"></ul>
+  <div id="message"></div>
+  <ul id="records">
+    <li class="loading">Loading records...</li>
+  </ul>
 
   <script>
-    const WORKER_URL = "https://cloudflaredb-pages.yasir-ali.workers.dev";
+    // Use relative URL - works on same domain
+    const WORKER_URL = ""; // Empty means use current domain
+    // Or use your Worker URL: "https://cloudflaredb-pages.yasir-ali.workers.dev"
 
+    // Show message helper
+    function showMessage(msg, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerHTML = `<div class="${type}">${msg}</div>`;
+      setTimeout(() => {
+        messageDiv.innerHTML = '';
+      }, 3000);
+    }
+
+    // Add record
     async function addRecord() {
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
-      if (!name || !email) return alert("Please enter both name and email.");
+      
+      if (!name || !email) {
+        showMessage("Please enter both name and email.", "error");
+        return;
+      }
 
-      await fetch(`${WORKER_URL}/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email })
-      });
+      try {
+        const response = await fetch(`${WORKER_URL}/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email })
+        });
 
-      document.getElementById("name").value = "";
-      document.getElementById("email").value = "";
-      loadRecords();
+        if (response.ok) {
+          showMessage("✅ Record added successfully!", "success");
+          document.getElementById("name").value = "";
+          document.getElementById("email").value = "";
+          loadRecords();
+        } else {
+          const error = await response.json();
+          showMessage("❌ Error: " + (error.error || "Failed to add record"), "error");
+        }
+      } catch (error) {
+        showMessage("❌ Network error: " + error.message, "error");
+      }
     }
 
+    // Load all records
     async function loadRecords() {
-      const res = await fetch(`${WORKER_URL}/list`);
-      const data = await res.json();
       const container = document.getElementById("records");
-      container.innerHTML = data.map(r => `<li><strong>${r.email}</strong></li>`).join("");
+      container.innerHTML = '<li class="loading">Loading records...</li>';
+      
+      try {
+        const response = await fetch(`${WORKER_URL}/list`);
+        
+        if (!response.ok) {
+          throw new Error("Failed to load records");
+        }
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+          container.innerHTML = '<li>📭 No records found. Add your first record above!</li>';
+          return;
+        }
+        
+        // Display records with both name and email
+        container.innerHTML = data.map(record => {
+          // Handle both array and object formats
+          if (Array.isArray(record)) {
+            return `
+              <li>
+                <div class="record-info">
+                  <div class="record-name">👤 ${record[1]?.name || record[1]}</div>
+                  <div class="record-email">📧 ${record[1]?.email || record[1]}</div>
+                </div>
+              </li>
+            `;
+          } else {
+            return `
+              <li>
+                <div class="record-info">
+                  <div class="record-name">👤 ${record.name || 'No name'}</div>
+                  <div class="record-email">📧 ${record.email || 'No email'}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteRecord('${record.id || record.key}')">Delete</button>
+              </li>
+            `;
+          }
+        }).join("");
+        
+      } catch (error) {
+        console.error("Error loading records:", error);
+        container.innerHTML = '<li class="error">❌ Failed to load records. Please refresh the page.</li>';
+      }
     }
 
+    // Delete record (if your backend supports it)
+    async function deleteRecord(id) {
+      if (!confirm("Are you sure you want to delete this record?")) return;
+      
+      try {
+        const response = await fetch(`${WORKER_URL}/delete/${id}`, {
+          method: "DELETE"
+        });
+        
+        if (response.ok) {
+          showMessage("✅ Record deleted successfully!", "success");
+          loadRecords();
+        } else {
+          showMessage("❌ Failed to delete record", "error");
+        }
+      } catch (error) {
+        showMessage("❌ Network error: " + error.message, "error");
+      }
+    }
+
+    // Auto-refresh every 10 seconds
+    let autoRefresh = setInterval(() => {
+      loadRecords();
+    }, 10000);
+
+    // Load records on page load
     loadRecords();
   </script>
 </body>
