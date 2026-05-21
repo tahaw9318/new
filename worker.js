@@ -1,594 +1,375 @@
-// Worker entry point
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
+/**
+ * Bubble Sort Algorithm with User Input
+ * 
+ * Bubble Sort repeatedly steps through the list, compares adjacent elements,
+ * and swaps them if they're in the wrong order. The pass through the list
+ * is repeated until the list is sorted.
+ */
+
+// Main function to run the bubble sort program
+function runBubbleSort() {
+    console.log("=" .repeat(50));
+    console.log("🔄 BUBBLE SORT VISUALIZER");
+    console.log("=" .repeat(50));
+    console.log("\nBubble Sort works by repeatedly stepping through the list,");
+    console.log("comparing adjacent elements and swapping them if they're in the wrong order.\n");
     
-    // Handle CORS for frontend requests
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
+    // Get array from user
+    const userArray = getArrayFromUser();
+    
+    if (!userArray || userArray.length === 0) {
+        console.log("❌ No valid array provided. Exiting...");
+        return;
     }
-
-    // API routes - forward to Durable Object
-    if (url.pathname.startsWith("/api/")) {
-      const id = env.MyDatabase.idFromName("main");
-      const obj = env.MyDatabase.get(id);
-      return obj.fetch(request);
-    }
-
-    // Serve HTML page for root route
-    if (url.pathname === "/" || url.pathname === "") {
-      const html = getHTML();
-      return new Response(html, {
-        headers: { 
-          "Content-Type": "text/html",
-          "Access-Control-Allow-Origin": "*"
-        },
-      });
-    }
-
-    return new Response("Not Found", { status: 404 });
-  }
-};
-
-// Durable Object for data storage
-export class MyDatabase {
-  constructor(state, env) {
-    this.storage = state.storage;
-  }
-
-  async fetch(request) {
-    const url = new URL(request.url);
-    const method = request.method;
-
-    // CORS headers for responses
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Content-Type": "application/json"
-    };
-
-    // Handle preflight
-    if (method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    // GET /api/list - Retrieve all entries
-    if (url.pathname === "/api/list" && method === "GET") {
-      try {
-        const entries = await this.storage.list();
-        const data = [];
-        for (const [key, value] of entries) {
-          data.push({
-            id: key,
-            name: value.name,
-            email: value.email,
-            timestamp: value.timestamp || new Date().toISOString()
-          });
-        }
-        // Sort by timestamp (newest first)
-        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        return new Response(JSON.stringify(data), {
-          headers: corsHeaders,
-        });
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: corsHeaders,
-        });
-      }
-    }
-
-    // POST /api/add - Add new entry
-    if (url.pathname === "/api/add" && method === "POST") {
-      try {
-        const { name, email } = await request.json();
-        
-        // Validation
-        if (!name || !email) {
-          return new Response(JSON.stringify({ error: "Name and email are required" }), {
-            status: 400,
-            headers: corsHeaders,
-          });
-        }
-        
-        // Generate unique ID
-        const id = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 6);
-        
-        // Store data
-        await this.storage.put(id, {
-          name: name,
-          email: email,
-          timestamp: new Date().toISOString()
-        });
-        
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: "Added successfully",
-          id: id 
-        }), {
-          status: 201,
-          headers: corsHeaders,
-        });
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: corsHeaders,
-        });
-      }
-    }
-
-    // DELETE /api/delete/:id - Delete an entry
-    if (url.pathname.startsWith("/api/delete/") && method === "DELETE") {
-      try {
-        const id = url.pathname.split("/").pop();
-        await this.storage.delete(id);
-        
-        return new Response(JSON.stringify({ success: true, message: "Deleted successfully" }), {
-          headers: corsHeaders,
-        });
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: corsHeaders,
-        });
-      }
-    }
-
-    // GET /api/get/:id - Get single entry
-    if (url.pathname.startsWith("/api/get/") && method === "GET") {
-      try {
-        const id = url.pathname.split("/").pop();
-        const entry = await this.storage.get(id);
-        
-        if (!entry) {
-          return new Response(JSON.stringify({ error: "Entry not found" }), {
-            status: 404,
-            headers: corsHeaders,
-          });
-        }
-        
-        return new Response(JSON.stringify({ id, ...entry }), {
-          headers: corsHeaders,
-        });
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: corsHeaders,
-        });
-      }
-    }
-
-    return new Response(JSON.stringify({ error: "Not found" }), {
-      status: 404,
-      headers: corsHeaders,
-    });
-  }
+    
+    console.log("\n📊 Original Array:", userArray);
+    console.log("-".repeat(50));
+    
+    // Perform bubble sort with visualization
+    const { sortedArray, steps, comparisons, swaps } = bubbleSortWithSteps([...userArray]);
+    
+    // Display results
+    console.log("\n✅ Sorted Array:", sortedArray);
+    console.log("-".repeat(50));
+    console.log("\n📈 SORTING STATISTICS:");
+    console.log(`   • Total Comparisons: ${comparisons}`);
+    console.log(`   • Total Swaps: ${swaps}`);
+    console.log(`   • Total Passes: ${steps.length}`);
+    console.log(`   • Array Length: ${userArray.length}`);
+    
+    // Display step-by-step visualization
+    displaySteps(steps);
+    
+    return { sortedArray, steps, comparisons, swaps };
 }
 
-// HTML Frontend
-function getHTML() {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Durable Object Database Demo</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+// Function to get array from user (works in browser and Node.js)
+function getArrayFromUser() {
+    // Check if running in browser
+    if (typeof window !== 'undefined' && window.prompt) {
+        return getArrayFromBrowser();
+    } 
+    // Check if running in Node.js
+    else if (typeof process !== 'undefined' && process.stdin) {
+        return getArrayFromNode();
+    }
+    else {
+        // Default array for demonstration
+        console.log("📝 Using default array: [64, 34, 25, 12, 22, 11, 90]");
+        return [64, 34, 25, 12, 22, 11, 90];
+    }
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .form-section {
-            background: #f7f9fc;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-
-        .form-section h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        .data-section {
-            background: #f7f9fc;
-            padding: 30px;
-            border-radius: 15px;
-        }
-
-        .data-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .refresh-btn {
-            background: #4CAF50;
-        }
-
-        .items-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .item-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-
-        .item-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .item-info {
-            flex: 1;
-        }
-
-        .item-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .item-email {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .item-meta {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-        }
-
-        .delete-btn {
-            background: #ff4757;
-            padding: 8px 20px;
-            font-size: 14px;
-            margin-left: 15px;
-        }
-
-        .delete-btn:hover {
-            background: #ff3838;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #667eea;
-        }
-
-        .error {
-            background: #ff4757;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .success {
-            background: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .content {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.5em;
-            }
-
-            .item-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .delete-btn {
-                margin-left: 0;
-                margin-top: 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Durable Object Database Demo</h1>
-            <p>Store and retrieve data using Cloudflare Durable Objects</p>
-        </div>
-        
-        <div class="content">
-            <div id="message"></div>
-            
-            <div class="form-section">
-                <h2>➕ Add New Entry</h2>
-                <form id="dataForm">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name" name="name" required placeholder="Enter full name">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" required placeholder="Enter email address">
-                    </div>
-                    <button type="submit">Add Entry</button>
-                </form>
-            </div>
-            
-            <div class="data-section">
-                <div class="data-header">
-                    <h2>📋 Saved Entries</h2>
-                    <button class="refresh-btn" onclick="loadEntries()">🔄 Refresh</button>
-                </div>
-                <div id="entriesList">
-                    <div class="loading">Loading entries...</div>
-                </div>
-            </div>
-        </div>
-    </div>
+// Get array from browser environment
+function getArrayFromBrowser() {
+    let input = prompt("Enter numbers separated by commas (e.g., 5,3,8,1,9):", "64,34,25,12,22,11,90");
     
-    <script>
-        const API_BASE = '/api';
+    if (!input) {
+        return null;
+    }
+    
+    // Parse the input
+    const numbers = input.split(',')
+        .map(item => parseFloat(item.trim()))
+        .filter(num => !isNaN(num));
+    
+    if (numbers.length === 0) {
+        alert("Please enter valid numbers!");
+        return getArrayFromBrowser();
+    }
+    
+    return numbers;
+}
+
+// Get array from Node.js environment
+function getArrayFromNode() {
+    const readline = require('readline');
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    
+    return new Promise((resolve) => {
+        rl.question("Enter numbers separated by commas (e.g., 5,3,8,1,9): ", (answer) => {
+            const numbers = answer.split(',')
+                .map(item => parseFloat(item.trim()))
+                .filter(num => !isNaN(num));
+            
+            rl.close();
+            resolve(numbers.length > 0 ? numbers : null);
+        });
+    });
+}
+
+// Bubble sort algorithm with step tracking
+function bubbleSortWithSteps(arr) {
+    const steps = [];
+    let comparisons = 0;
+    let swaps = 0;
+    const n = arr.length;
+    
+    // Record initial state
+    steps.push({
+        pass: 0,
+        array: [...arr],
+        comparisons: 0,
+        swaps: 0,
+        description: "Initial array"
+    });
+    
+    // Bubble sort algorithm
+    for (let i = 0; i < n - 1; i++) {
+        let swapped = false;
+        let passComparisons = 0;
+        let passSwaps = 0;
         
-        // Load entries on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadEntries();
+        // Last i elements are already in place
+        for (let j = 0; j < n - i - 1; j++) {
+            comparisons++;
+            passComparisons++;
+            
+            // Compare adjacent elements
+            if (arr[j] > arr[j + 1]) {
+                // Swap elements
+                [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                swaps++;
+                passSwaps++;
+                swapped = true;
+            }
+        }
+        
+        // Record step
+        steps.push({
+            pass: i + 1,
+            array: [...arr],
+            comparisons: passComparisons,
+            swaps: passSwaps,
+            description: `Pass ${i + 1}: ${passSwaps > 0 ? `Made ${passSwaps} swaps` : "No swaps needed"}`,
+            swapped: swapped
         });
         
-        // Handle form submission
-        document.getElementById('dataForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // If no swapping occurred, array is sorted
+        if (!swapped) {
+            steps.push({
+                pass: i + 1,
+                array: [...arr],
+                comparisons: 0,
+                swaps: 0,
+                description: `✅ Array is sorted! Stopping early.`,
+                earlyStop: true
+            });
+            break;
+        }
+    }
+    
+    return { sortedArray: arr, steps, comparisons, swaps };
+}
+
+// Display step-by-step visualization
+function displaySteps(steps) {
+    console.log("\n" + "=".repeat(50));
+    console.log("📖 STEP-BY-STEP VISUALIZATION");
+    console.log("=".repeat(50));
+    
+    steps.forEach((step, index) => {
+        if (step.pass === 0) {
+            console.log(`\n📍 ${step.description}:`);
+            console.log(`   ${step.array.join(" → ")}`);
+        } else {
+            console.log(`\n📍 Pass ${step.pass}:`);
+            console.log(`   Before: ${step.array.join(" → ")}`);
+            console.log(`   📊 Comparisons: ${step.comparisons}, Swaps: ${step.swaps}`);
+            console.log(`   💡 ${step.description}`);
             
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+            // Visual representation with arrows
+            if (step.swaps > 0) {
+                console.log(`   🔄 ${step.array.join(" → ")}`);
+            }
+        }
+    });
+}
+
+// Visual bubble sort with animation (for browser)
+class BubbleSortVisualizer {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.array = [];
+        this.isSorting = false;
+    }
+    
+    // Set array from user input
+    setArray(arr) {
+        this.array = [...arr];
+        this.render();
+    }
+    
+    // Render the array as visual bars
+    render() {
+        if (!this.container) return;
+        
+        const maxValue = Math.max(...this.array, 1);
+        this.container.innerHTML = '';
+        
+        this.array.forEach((value, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = `${(value / maxValue) * 100}%`;
+            bar.style.width = `${100 / this.array.length}%`;
+            bar.textContent = value;
+            bar.setAttribute('data-index', index);
+            this.container.appendChild(bar);
+        });
+    }
+    
+    // Animate bubble sort
+    async animateBubbleSort(delay = 500) {
+        if (this.isSorting) return;
+        this.isSorting = true;
+        
+        const arr = [...this.array];
+        const n = arr.length;
+        const bars = document.querySelectorAll('.bar');
+        
+        for (let i = 0; i < n - 1; i++) {
+            let swapped = false;
             
-            try {
-                const response = await fetch(\`\${API_BASE}/add\`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name, email })
-                });
+            for (let j = 0; j < n - i - 1; j++) {
+                // Highlight comparing elements
+                this.highlightBars([j, j + 1], 'comparing');
+                await this.sleep(delay);
                 
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showMessage('Entry added successfully!', 'success');
-                    document.getElementById('dataForm').reset();
-                    loadEntries(); // Reload the list
-                } else {
-                    showMessage(result.error || 'Failed to add entry', 'error');
+                if (arr[j] > arr[j + 1]) {
+                    // Highlight swapping elements
+                    this.highlightBars([j, j + 1], 'swapping');
+                    await this.sleep(delay);
+                    
+                    // Swap
+                    [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                    swapped = true;
+                    
+                    // Update display
+                    this.array = [...arr];
+                    this.render();
+                    this.highlightBars([j, j + 1], 'swapped');
+                    await this.sleep(delay);
                 }
-            } catch (error) {
-                showMessage('Network error: ' + error.message, 'error');
+                
+                // Reset highlight
+                this.highlightBars([j, j + 1], 'default');
+            }
+            
+            // Mark sorted elements
+            this.highlightBars([n - i - 1], 'sorted');
+            
+            if (!swapped) break;
+        }
+        
+        // Mark all as sorted
+        this.highlightAllBars('sorted');
+        this.isSorting = false;
+    }
+    
+    // Helper functions for visualization
+    highlightBars(indices, state) {
+        const bars = document.querySelectorAll('.bar');
+        bars.forEach((bar, idx) => {
+            bar.classList.remove('comparing', 'swapping', 'sorted');
+            if (indices.includes(idx)) {
+                bar.classList.add(state);
             }
         });
+    }
+    
+    highlightAllBars(state) {
+        const bars = document.querySelectorAll('.bar');
+        bars.forEach(bar => {
+            bar.classList.remove('comparing', 'swapping');
+            bar.classList.add(state);
+        });
+    }
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Simple bubble sort (no visualization)
+function bubbleSortSimple(arr) {
+    const array = [...arr];
+    const n = array.length;
+    
+    for (let i = 0; i < n - 1; i++) {
+        let swapped = false;
         
-        // Load all entries
-        async function loadEntries() {
-            try {
-                const response = await fetch(\`\${API_BASE}/list\`);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load entries');
-                }
-                
-                const entries = await response.json();
-                displayEntries(entries);
-            } catch (error) {
-                showMessage('Error loading entries: ' + error.message, 'error');
-                document.getElementById('entriesList').innerHTML = '<div class="error">Failed to load entries. Please refresh the page.</div>';
+        for (let j = 0; j < n - i - 1; j++) {
+            if (array[j] > array[j + 1]) {
+                [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                swapped = true;
             }
         }
         
-        // Display entries
-        function displayEntries(entries) {
-            const entriesList = document.getElementById('entriesList');
-            
-            if (!entries || entries.length === 0) {
-                entriesList.innerHTML = '<div class="empty-state">📭 No entries found. Add your first entry above!</div>';
-                return;
-            }
-            
-            entriesList.innerHTML = \`
-                <div class="items-list">
-                    \${entries.map(entry => \`
-                        <div class="item-card">
-                            <div class="item-info">
-                                <div class="item-name">\${escapeHtml(entry.name)}</div>
-                                <div class="item-email">📧 \${escapeHtml(entry.email)}</div>
-                                <div class="item-meta">🆔 ID: \${entry.id.substring(0, 15)}... | 📅 Added: \${formatDate(entry.timestamp)}</div>
-                            </div>
-                            <button class="delete-btn" onclick="deleteEntry('\${entry.id}')">Delete</button>
-                        </div>
-                    \`).join('')}
-                </div>
-            \`;
-        }
+        if (!swapped) break;
+    }
+    
+    return array;
+}
+
+// Optimized bubble sort with flag
+function bubbleSortOptimized(arr) {
+    const array = [...arr];
+    let n = array.length;
+    let comparisons = 0;
+    let swaps = 0;
+    
+    for (let i = 0; i < n - 1; i++) {
+        let swapped = false;
+        let lastSwap = 0;
         
-        // Delete entry
-        async function deleteEntry(id) {
-            if (!confirm('Are you sure you want to delete this entry?')) return;
-            
-            try {
-                const response = await fetch(\`\${API_BASE}/delete/\${id}\`, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showMessage('Entry deleted successfully!', 'success');
-                    loadEntries(); // Reload the list
-                } else {
-                    showMessage(result.error || 'Failed to delete entry', 'error');
-                }
-            } catch (error) {
-                showMessage('Network error: ' + error.message, 'error');
+        for (let j = 0; j < n - i - 1; j++) {
+            comparisons++;
+            if (array[j] > array[j + 1]) {
+                [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                swaps++;
+                swapped = true;
+                lastSwap = j + 1;
             }
         }
         
-        // Show message
-        function showMessage(msg, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = \`<div class="\${type}">\${msg}</div>\`;
-            setTimeout(() => {
-                messageDiv.innerHTML = '';
-            }, 3000);
-        }
+        // Optimize: Reduce the range of inner loop
+        n = lastSwap;
         
-        // Format date
-        function formatDate(timestamp) {
-            if (!timestamp) return 'Just now';
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-            
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return \`\${diffMins} minute\${diffMins > 1 ? 's' : ''} ago\`;
-            if (diffHours < 24) return \`\${diffHours} hour\${diffHours > 1 ? 's' : ''} ago\`;
-            if (diffDays < 7) return \`\${diffDays} day\${diffDays > 1 ? 's' : ''} ago\`;
-            return date.toLocaleDateString();
-        }
-        
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            loadEntries();
-        }, 30000);
-    </script>
-</body>
-</html>`;
+        if (!swapped) break;
+    }
+    
+    return { sortedArray: array, comparisons, swaps };
+}
+
+// Export functions for different environments
+if (typeof module !== 'undefined' && module.exports) {
+    // Node.js export
+    module.exports = {
+        bubbleSortSimple,
+        bubbleSortOptimized,
+        bubbleSortWithSteps,
+        BubbleSortVisualizer,
+        runBubbleSort
+    };
+} else if (typeof window !== 'undefined') {
+    // Browser export
+    window.BubbleSort = {
+        simple: bubbleSortSimple,
+        optimized: bubbleSortOptimized,
+        withSteps: bubbleSortWithSteps,
+        Visualizer: BubbleSortVisualizer,
+        run: runBubbleSort
+    };
+    
+    // Auto-run if in browser
+    console.log("🔄 Bubble Sort Library Loaded!");
+    console.log("Call BubbleSort.run() to start, or BubbleSort.Visualizer for interactive visualization");
+}
+
+// If running directly, execute
+if (typeof require !== 'undefined' && require.main === module) {
+    runBubbleSort();
 }
